@@ -1,19 +1,19 @@
 library(tidyverse)
 library(lubridate)
 
-# From URL
-bed <- read_csv(url('https://unl.box.com/shared/static/h6ixr5gli5pcew2a5egmmybu89h0jrh7.csv'))
-bed <- bed[-1]
-bed$NAICS <- as.numeric(bed$NAICS)
-bed_industry <- read_csv(url('https://unl.box.com/shared/static/dneof6j9qk8087fr5nvhi0vtn58mpcnw.csv'))
-jr_training <- read_csv(url('https://unl.box.com/shared/static/n9sc07385n072dkwtjd3c3tn1kgmvgqj.csv'))
-
-# # From Computer
-# bed <- read_csv('C:/Users/JHo99/Box/UCARE/Data/Clean Data/bed.csv')
+# # From URL
+# bed <- read_csv(url('https://unl.box.com/shared/static/h6ixr5gli5pcew2a5egmmybu89h0jrh7.csv'))
 # bed <- bed[-1]
 # bed$NAICS <- as.numeric(bed$NAICS)
-# bed_industry <- read_csv('C:/Users/JHo99/Box/UCARE/Data/Clean Data/bed_industry.csv')
-# jr_training <- read_csv('C:/Users/JHo99/Box/UCARE/Data/Clean Data/JRandTraining.csv')
+# bed_industry <- read_csv(url('https://unl.box.com/shared/static/dneof6j9qk8087fr5nvhi0vtn58mpcnw.csv'))
+# jr_training <- read_csv(url('https://unl.box.com/shared/static/n9sc07385n072dkwtjd3c3tn1kgmvgqj.csv'))
+
+# From Computer
+bed <- read_csv('C:/Users/JHo99/Box/UCARE/Data/Clean Data/bed.csv')
+bed <- bed[-1]
+bed$NAICS <- as.numeric(bed$NAICS)
+bed_industry <- read_csv('C:/Users/JHo99/Box/UCARE/Data/Clean Data/bed_industry.csv')
+jr_training <- read_csv('C:/Users/JHo99/Box/UCARE/Data/Clean Data/JRandTraining.csv')
 
 # Subset function for BED dataframe
 subset_bed <- function(state = 'U.S. totals',

@@ -20,26 +20,24 @@ yearCategory <- factor(jr_training$period)
 t <- jr_training %>%
   mutate(period.num = as.numeric(substr(as.character(period),1,4)))
 
-lmod <- lm(adj_realloc ~ PT, t)
+lmod <- lm(adj_realloc ~  PT + industryCategory*period.num, t)
 summary(lmod)
 plot(lmod)
 
-lmod <- lm(adj_realloc ~ PT + industryCategory, t)
+lmod <- lm(adj_realloc ~ I(1/exp(OJ)) + period.num + industryCategory + industryCategory*period.num, t)
 summary(lmod)
 plot(lmod)
 
-lmod <- lm(adj_realloc ~ OJ + period.num, t)
+lmod <- lm(adj_realloc ~ I(1/log(RW)) + period.num + industryCategory + industryCategory*period.num, t)
 summary(lmod)
 plot(lmod)
 
-lmod <- lm(adj_realloc ~ OJ + period.num + industryCategory, t)
+lmod <- lm(adj_realloc ~ I(1/RL) + period.num + industryCategory + industryCategory*period.num, t)
 summary(lmod)
 plot(lmod)
 
 # Worker Reallocation Analysis
 
-#Scale
-scale <- 'RL'
 p <- wr_training %>%
   select(-sep, -hires) %>%
   ungroup() %>%
@@ -51,72 +49,72 @@ industryCategoryWR <- factor(p$NAICS)
 # Year Dummies WR
 yearCategoryWR <- factor(p$period)
 
+# numericized year
+p <- p %>%
+  mutate(period.num = as.numeric(substr(as.character(period),1,4)))
 
-lmod <- lm(realloc_rate ~ PT, p)
+lmod <- lm(realloc_rate ~ PT + industryCategoryWR*period.num, p)
 summary(lmod)
 plot(lmod)
 
-lmod <- lm(realloc_rate ~ PT + industryCategoryWR, p)
+lmod <- lm(realloc_rate ~ OJ + industryCategoryWR*period.num, p)
 summary(lmod)
 plot(lmod)
 
-lmod <- lm(realloc_rate ~ PT + yearCategoryWR, p)
+lmod <- lm(realloc_rate ~ RW + industryCategoryWR*period.num, p)
 summary(lmod)
 plot(lmod)
 
-lmod <- lm(realloc_rate ~ PT + yearCategoryWR + industryCategoryWR, p)
+lmod <- lm(realloc_rate ~ RL + industryCategoryWR*period.num, p)
 summary(lmod)
 plot(lmod)
 
 
-ggplot(data = p) +
-  geom_point(mapping = aes(x = OJ, y = realloc_rate, colour = NAICS)) 
-
-  stat_function(fun = eqPT, col = 'red', size = 1) +
-  theme_minimal() +
-  xlab("On-Site/In-Plant Training") +
-  ylab("Job Reallocation Rate") +
-  ggtitle("On-Site/In-Plant and Job Reallocation Rate")
-
-eqRL <- function(x){-50.525 + (581.981/(x+6.2)) - (5.690/(x-6.2))}
-eqRW <- function(x){-36.3646 + (436.4665/(x+3.34)) + (0.9135/(x-3.34))}
-
-eqOJ <- function(x){-6.464 + (246.194/(x^2))}
-eqPT <- function(x){-10.041 + (235.654/(x^2))}
-
-
-wr_training <- wr_training %>%
+# Quits Analysis
+q <- annualized_quits() %>%
+  mutate(period.num = as.numeric(substr(as.character(period),1,4))) %>%
   spread(`Scale ID`, training_index)
 
-wr_training
-
-quits <- jolts[jolts$data_element == 'Quits' & 
-               jolts$rate_level == 'Rate',]
-
-quits <- quits %>%
-  select(period, value, industry, NAICS) %>%
-  rename(quits = value)
-
-quits$NAICS <- as.numeric(quits$NAICS)
-q <- inner_join(p, quits, by = c("period", 'industry', 'NAICS'))
-
-lmod <- lm(quits ~ PT, q)
+lmod <- lm(quits ~ I(1/PT) + industryCategoryWR*period.num, q)
 summary(lmod)
 plot(lmod)
 
-lmod <- lm(quits ~ PT + industryCategoryWR, q)
+lmod <- lm(quits ~ I(1/OJ) + industryCategoryWR*period.num, q)
 summary(lmod)
 plot(lmod)
 
-lmod <- lm(quits ~ PT + yearCategoryWR, q)
+lmod <- lm(quits ~ I(1/RW^2) + industryCategoryWR, q)
 summary(lmod)
 plot(lmod)
 
-lmod <- lm(quits ~ PT + yearCategoryWR + industryCategoryWR, q)
+lmod <- lm(quits ~ I(1/RL^2) , q)
 summary(lmod)
 plot(lmod)
 
-ggplot(data = q[q$NAICS == 42,]) +
-  geom_point(mapping = aes(x = RL, y = quits), colour = 'blue')
+ggplot(data = q) +
+  geom_point(mapping = aes(period, quits, colour = industry))
 
+# Layoffs Analysis
+l <- annualized_layoffs() %>%
+  mutate(period.num = as.numeric(substr(as.character(period),1,4))) %>%
+  spread(`Scale ID`, training_index)
+
+lmod <- lm(layoffs ~ industryCategoryWR*period.num, l)
+summary(lmod)
+plot(lmod)
+
+lmod <- lm(layoffs ~ OJ + industryCategoryWR*period.num, l)
+summary(lmod)
+plot(lmod)
+
+lmod <- lm(layoffs ~ RW , l)
+summary(lmod)
+plot(lmod)
+
+lmod <- lm(layoffs ~ RL , l)
+summary(lmod)
+plot(lmod)
+
+ggplot(data = l) +
+  geom_point(mapping = aes(RW, layoffs, colour = industry))
 

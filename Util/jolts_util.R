@@ -1,22 +1,24 @@
 library(tidyverse)
 library(lubridate)
 
-# From URL
-jolts <- read_csv(url('https://unl.box.com/shared/static/npyjhxlfhaif6wbja14m3dfr2ljxc8mz.csv'))
-jolts <- jolts[-1]
-jolts_industry <- read_csv(url('https://unl.box.com/shared/static/sgu028wja5eack5yqnbmt11lanc66bt5.csv'))
-jolts_industry <- jolts_industry[-1]
-
-wr_training <- read_csv(url('https://unl.box.com/shared/static/d2led7ztj2qiakosdbox9o5r8pehjyoc.csv'))
-
-
-# # From Computer
-# jolts <- read_csv('C:/Users/JHo99/Box/UCARE/Data/Clean Data/JOLTS.csv')
+# # From URL
+# jolts <- read_csv(url('https://unl.box.com/shared/static/npyjhxlfhaif6wbja14m3dfr2ljxc8mz.csv'))
 # jolts <- jolts[-1]
-# jolts_industry <- read_csv('C:/Users/JHo99/Box/UCARE/Data/Clean Data/jolts_industry.csv')
+# jolts_industry <- read_csv(url('https://unl.box.com/shared/static/sgu028wja5eack5yqnbmt11lanc66bt5.csv'))
 # jolts_industry <- jolts_industry[-1]
 # 
-# wr_training <- read_csv('C:/Users/JHo99/Box/UCARE/Data/Clean Data/WRandTraining.csv')
+# wr_training <- read_csv(url('https://unl.box.com/shared/static/d2led7ztj2qiakosdbox9o5r8pehjyoc.csv'))
+
+
+# From Computer
+jolts <- read_csv('C:/Users/JHo99/Box/UCARE/Data/Clean Data/JOLTS.csv')
+jolts <- jolts[-1]
+jolts_industry <- read_csv('C:/Users/JHo99/Box/UCARE/Data/Clean Data/jolts_industry.csv')
+jolts_industry <- jolts_industry[-1]
+
+wr_training <- read_csv('C:/Users/JHo99/Box/UCARE/Data/Clean Data/WRandTraining.csv')
+wr_training <- wr_training %>%
+  select(-X1)
 
 # Subset JOLTS dataframe function
 subset_jolts <- function(NAICS, data_element, rate_level = 'Rate'){
@@ -94,3 +96,50 @@ annualized_worker_realloc <- function(NAICS){
 }
 
 
+# Add quits column on wr_training
+# TODO: Data annualized not divided
+annualized_quits <- function(){
+  data_element <- 'Quits'
+  
+  t <- jolts[jolts$data_element == data_element &
+               jolts$rate_level == 'Rate',] %>%
+    select(period, value, industry, NAICS) %>%
+    mutate(period = substr(as.character(period),1,4)) %>%
+    group_by(period, industry, NAICS) %>%
+    summarize(value = sum(value)) %>%
+    ungroup() %>%
+    mutate(period = parse_date_time(period, 'y')) %>%
+    mutate(NAICS = as.numeric(NAICS)) %>%
+    rename(quits = value)
+  
+  wr_training$period <- parse_date_time(wr_training$period, 'ymd')
+  
+  p <- inner_join(wr_training, t, by = c("industry", 'NAICS', 'period')) %>%
+    select(NAICS, period, `Scale ID`, industry, training_index, quits)
+  
+  return(p)
+}
+
+# Add layoffs to column on wr_training
+# TODO: Data annualized not divided
+annualized_layoffs <- function(){
+  data_element <- 'Layoffs and discharges'
+  
+  t <- jolts[jolts$data_element == data_element &
+               jolts$rate_level == 'Rate',] %>%
+    select(period, value, industry, NAICS) %>%
+    mutate(period = substr(as.character(period),1,4)) %>%
+    group_by(period, industry, NAICS) %>%
+    summarize(value = sum(value)) %>%
+    ungroup() %>%
+    mutate(period = parse_date_time(period, 'y')) %>%
+    mutate(NAICS = as.numeric(NAICS)) %>%
+    rename(layoffs = value)
+  
+  wr_training$period <- parse_date_time(wr_training$period, 'ymd')
+  
+  p <- inner_join(wr_training, t, by = c("industry", 'NAICS', 'period')) %>%
+    select(NAICS, period, `Scale ID`, industry, training_index, layoffs)
+  
+  return(p)
+}

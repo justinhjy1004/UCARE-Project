@@ -59,4 +59,4 @@ for(naics in jolts_industry$industry_code){
 # Remove Financial Activities Rows
 df <- df[df$industry != 'Financial activities',]
 
-write.csv(df, file = 'WRandTraining.csv')
+write.csv(df, file = 'C:/Users/JHo99/Box/UCARE/Data/Clean Data/WRandTraining.csv')
