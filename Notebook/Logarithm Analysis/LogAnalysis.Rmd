@@ -1,20 +1,25 @@
 ---
-title: "Reallocation Rate Analysis with Interaction Term between Industry Category and Time"
-output: html_notebook
+title: "Analysis Using Natural Logarithm with Interaction Term"
+output:
+  pdf_document: 
+    keep_tex: yes
+  html_document:
+    df_print: paged
+  html_notebook: default
 ---
 
-The general regression model used in analyzing the effects of different training indices on different reallocation rates is as follow:
+# Summary
+Applying a modified linear regression model for better interpretability, we found only a few changes in significance of relationship. Using the model:
+$$ln(R_j) = \alpha + \beta T_i + \gamma ln(t) + \sum_n \delta I_n + \sum_n \lambda_n I_n t$$
+we found similar results for most of the regressions performed.
 
-$$R_j = \alpha + \beta T_i + \gamma t + \sum_n \delta I_n + \sum_n \lambda_n I_n t$$
+The main difference observed would be the reduced significance of all training indices with the worker reallocation rate . The correlation between worker reallocation rate and RL  However, PT retains its strong correlation. In general, most of the regressions have a lower R-squared after the modification, but reamins high. 
 
-* $R =$ *Reallocation Rate*
-* $j =$ *Type of reallocation rate *
-* $T =$ *Training Index*
-* $i =$ *type of training index* 
-*  $t =$ *time, treated as a continuous variable with 2004 denoted as 1 and 2018 denoted as 15 *
-* $I =$ *industry*
-* $n =$ *type of industry based on NAICS Classification*
+# NAICS Classification
+Due to the uneven nature of the datasets used, the industry classified in the Business Employment Dynamics dataset (Job Reallocation Rate) differs from the JOLTS dataset (Worker Reallocation Rate). The following links would provide the mappings of the industry to the NAICS code.
 
+* BED - https://unl.box.com/s/dneof6j9qk8087fr5nvhi0vtn58mpcnw
+* JOLTS - https://unl.box.com/s/sgu028wja5eack5yqnbmt11lanc66bt5
 
 # Job Reallocation Rate
 Job Reallocation Rate refers to total jobs created plus total jobs destroyed, divided by total jobs in the economy. This measure allows us to look at how quickly jobs are reallocated from shrinking firms to expanding ones. 
@@ -27,25 +32,25 @@ Job Reallocation **does not** include workers switching jobs if the job is not c
 ### In-Plant/On-Site Training (PT)
 
 ```{r}
-lmod <- lm(adj_realloc ~  PT + industryCategory*period.num, t)
+lmod <- lm(log(adj_realloc) ~  log(PT) + industryCategory*period.num, t)
 summary(lmod)
 ```
 
 ### On-the-Job Training (OJ)
 ```{r}
-lmod <- lm(adj_realloc ~  OJ + industryCategory*period.num, t)
+lmod <- lm(log(adj_realloc) ~  log(OJ) + industryCategory*period.num, t)
 summary(lmod)
 ```
 
 ### Relevant Work Experience (RW)
 ```{r}
-lmod <- lm(adj_realloc ~  RW + industryCategory*period.num, t)
+lmod <- lm(log(adj_realloc) ~  log(RW) + industryCategory*period.num, t)
 summary(lmod)
 ```
 
 ### Required Level of Education (RL)
 ```{r}
-lmod <- lm(adj_realloc ~  RL + industryCategory*period.num, t)
+lmod <- lm(log(adj_realloc) ~  log(RL) + industryCategory*period.num, t)
 summary(lmod)
 ```
 
@@ -57,7 +62,6 @@ Most previous literature found that training indices and reallocation rate have 
 ```{r}
 ggplot(data = t) +
   geom_point(mapping = aes(RW, adj_realloc, colour = NAICS)) +
-  stat_function(fun = eqn_RW, colour = 'red', size = 1) +
   xlab('Required Level of Education') + 
   ylab('Job Reallocation Rate') + 
   ggtitle("Required Level of Education and Job Reallocation Rate") +
@@ -68,16 +72,9 @@ However, when dummies are included, the relationship holds for some but not for 
 
 Since the $R^2$ value increased and all of the interactive terms are statistically significant, it is likely that idiosyncracies in the labour market of specific industry as well as another variable that is changing across time could better explain the trend of declining job reallocation rate across time. 
 
-In fact, using the regression model:
-$$R_{JR} = \alpha + \beta \frac{1}{T_{RL}} + \gamma t + \sum_n \delta I_n + \sum_n \lambda_n I_n t$$
-* *JR stands for Job Reallocation*
-
-* *RL stands for Required Level of Education*
-
-gives us a better result. Which suggests that initial increase in Required Level of Education increases the job reallocation significantly but the effect plateaus as Required of Level of Education reaches a point.
 
 ```{r}
-lmod <- lm(adj_realloc ~ I(1/RL) + industryCategory*period.num, t)
+lmod <- lm(log(adj_realloc) ~ log(RL) + industryCategory*period.num, t)
 summary(lmod)
 ```
 
@@ -92,14 +89,14 @@ Using the formula $Job\ Reallocation = Job\ Creation + Job\ Destruction$, we can
 
 $$R_{job \ creation} = \alpha + \beta T_{RL} + \gamma t + \sum_n \delta I_n + \sum_n \lambda_n I_n t$$
 ```{r}
-lmod <- lm(gain ~ RL + industryCategory*period.num, t)
+lmod <- lm(log(gain) ~ log(RL) + industryCategory*period.num, t)
 summary(lmod)
 ```
 
 $$R_{job \ destruction} = \alpha + \beta T_{RL} + \gamma t + \sum_n \delta I_n + \sum_n \lambda_n I_n t$$
 
 ```{r}
-lmod <- lm(loss ~ RL + industryCategory*period.num, t)
+lmod <- lm(log(loss) ~ log(RL) + industryCategory*period.num, t)
 summary(lmod)
 ```
 
@@ -115,33 +112,31 @@ Worker reallocation rate is defined as worker reallocation divided by the labour
 For separations, JOLTS categorize them into layoffs and discharges, quits and other separations. This could help us further identify the patterns within the labor market. 
 
 ## Results
-A multiplicative inverse model is used in this analysis as it yields a better R-squared value.
-
 ### In-Plant/On-Site Training (PT)
 
 ```{r}
-lmod <- lm(realloc_rate ~ I(1/PT) + industryCategoryWR*period.num, p)
+lmod <- lm(log(realloc_rate) ~ log(PT) + industryCategoryWR*period.num, p)
 summary(lmod)
 ```
 
 ### On-the-Job Training (OJ)
 
 ```{r}
-lmod <- lm(realloc_rate ~ I(1/OJ^5) + industryCategoryWR*period.num, p)
+lmod <- lm(log(realloc_rate) ~ log(OJ) + industryCategoryWR*period.num, p)
 summary(lmod)
 ```
 
 ### Relevant Work Experience (RW)
 
 ```{r}
-lmod <- lm(realloc_rate ~ I(1/RW^5) + industryCategoryWR*period.num, p)
+lmod <- lm(log(realloc_rate) ~ log(RW) + industryCategoryWR*period.num, p)
 summary(lmod)
 ```
 
 ### Required Level of Education (RL)
 
 ```{r}
-lmod <- lm(realloc_rate ~ I(1/RL^5) + industryCategoryWR*period.num, p)
+lmod <- lm(log(realloc_rate) ~ log(RL) + industryCategoryWR*period.num, p)
 summary(lmod)
 ```
 
@@ -162,26 +157,25 @@ The relationship we are interested to look further into is the relationship betw
 Quits are seen and interpreted as voluntary discharges initiated by the worker and not the firm. Looking at this measurement, we could analyze the behaviour of the worker in relation to their level of training.
 
 ## Results
-Just like the worker reallocation rate, a multiplicative inverse model is used for the regression.
 
 ### In-Plant/On-Site Training (PT)
 ```{r}
-lmod <- lm(quits ~ I(1/PT^5) + industryCategoryWR*period.num, q)
+lmod <- lm(log(quits) ~ log(PT) + industryCategoryWR*period.num, q)
 summary(lmod)
 ```
 ### On-the-Job Training (OJ)
 ```{r}
-lmod <- lm(quits ~ I(1/OJ^5) + industryCategoryWR*period.num, q)
+lmod <- lm(log(quits) ~ log(OJ) + industryCategoryWR*period.num, q)
 summary(lmod)
 ```
 ### Related Work Experience (RW)
 ```{r}
-lmod <- lm(quits ~ I(1/RW^5) + industryCategoryWR*period.num, q)
+lmod <- lm(log(quits) ~ log(RW) + industryCategoryWR*period.num, q)
 summary(lmod)
 ```
 ### Required Level of Education (RL)
 ```{r}
-lmod <- lm(quits ~ I(1/RL^5) + industryCategoryWR*period.num, q)
+lmod <- lm(log(quits) ~ log(RL) + industryCategoryWR*period.num, q)
 summary(lmod)
 ```
 
@@ -196,26 +190,25 @@ On the other hand, RL has no statistically significant relationship with quit ra
 Layoffs and Discharges are interpreted as separations that are initiated by the firm, not the employee. From the employees' perspectives, such a separation is involuntary and looking at this measurement could provide us with insights about the employers' decision in separation with regards to the level of training. 
 
 ## Results
-A multiplicative inverse model is also used for the following regressions.
 
 ### In-Plant/On-Site Training (PT)
 ```{r}
-lmod <- lm(layoffs ~ I(1/PT^3) + industryCategoryWR*period.num, l)
+lmod <- lm(log(layoffs) ~ log(PT) + industryCategoryWR*period.num, l)
 summary(lmod)
 ```
 ### On-the-Job Training (OJ)
 ```{r}
-lmod <- lm(layoffs ~ I(1/OJ^3) + industryCategoryWR*period.num, l)
+lmod <- lm(log(layoffs) ~ log(OJ) + industryCategoryWR*period.num, l)
 summary(lmod)
 ```
 ### Related Work Experience (RW)
 ```{r}
-lmod <- lm(layoffs ~ I(1/RW^3) + industryCategoryWR*period.num, l)
+lmod <- lm(log(layoffs) ~ log(RW) + industryCategoryWR*period.num, l)
 summary(lmod)
 ```
 ### Required Level of Education (RL)
 ```{r}
-lmod <- lm(layoffs ~ I(1/RL^3) + industryCategoryWR*period.num, l)
+lmod <- lm(log(layoffs) ~ log(RL) + industryCategoryWR*period.num, l)
 summary(lmod)
 ```
 
@@ -223,3 +216,6 @@ summary(lmod)
 Interestingly, layoffs and discharges have no statistically significant relationship with OJ, PT and RW but instead, have a positive relationship with RL. This means that it is likely that the observed relationship in worker reallocation rate is dominated by quits for OJ, PT and RW whereas RL is better explained by layoffs. 
 
 The results concur with the dataset in the Business Employment Dynamics, whereby the observed relationship between RL and Job Reallocation Rate is primarily driven by Job Destruction. Consequentially, layoffs is the primary factor behind the relationship between worker reallocation rate and RL. 
+
+# Other Separations
+For other separations, no statistical significance is found any of the regressions.

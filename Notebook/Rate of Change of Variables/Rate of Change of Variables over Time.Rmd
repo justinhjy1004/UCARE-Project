@@ -1,0 +1,71 @@
+---
+title: "Rate of Change of Variables Over Time"
+output: html_notebook
+---
+
+Job Reallocation Rate as defined and collected by Business Employment Dynamics is based on the formula:
+
+$$Job \; Reallocation \; Rate = \frac{gain + loss}{total\;employment}$$
+
+Using the formula $rate = \frac{final-initial}{initial}$, the rate of change of the variables are calculated to indentify if there are discernable relationships in them. 
+
+# Rate of Change of Training Indices Over Time
+## Rate of Change for Required Level of Education
+```{r}
+lmod <- lm(dRL ~ period.num, t)
+summary(lmod)
+```
+## Rate of Change for On-the-job Training
+```{r}
+lmod <- lm(dOJ ~ period.num, t)
+summary(lmod)
+```
+## Rate of Change for In-Plant Training
+```{r}
+lmod <- lm(dPT ~ period.num, t)
+summary(lmod)
+```
+## Rate of Change for Relevant Work Experience
+```{r}
+lmod <- lm(dRW ~ period.num, t)
+summary(lmod)
+```
+
+According to the results, there is little to no statistical relationship between the variables over time. The changes are also minimal, at less than |1%|. 
+
+```{r}
+ggplot(data = t) + 
+  geom_point(mapping = aes(x = period.num, y = dRW, colour = factor(NAICS))) + 
+  ggtitle("Rate of Change of RW Over Time")
+```
+
+Visualizing the data allows us to see that the fluctuations are relatively small across industry. 
+
+# Rate of Change of Job Reallocation Rates Over Time
+## Rate of Change for Job Reallocation Rate
+```{r}
+lmod <- lm(dadj_realloc ~ period.num, t)
+summary(lmod)
+```
+## Rate of Change for Job Gains Rate
+```{r}
+lmod <- lm(dgain ~ period.num, t)
+summary(lmod)
+```
+## Rate of Change for Job Loss Rate
+```{r}
+lmod <- lm(dloss ~ period.num, t)
+summary(lmod)
+```
+
+For job reallocation rate and its components, it has relatively weak relationship. Nevertheless, it is interesting that the rate is mostly positive even though the rates as a whole has a negative relationship with the variables over time. 
+
+Visualizing the data, the fluctuations in general are also small except for Mining (NAICS 21), whose values are large relative to other industries. 
+
+```{r}
+
+ggplot(data = t) + 
+  geom_point(mapping = aes(x = period.num, y = dadj_realloc, colour = factor(NAICS))) + 
+  ggtitle("Rate of Change of Job Reallocation Rate Over Time")
+```
+

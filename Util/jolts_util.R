@@ -143,3 +143,28 @@ annualized_layoffs <- function(){
   
   return(p)
 }
+
+
+# Add Other Discharges to column on wr_training
+# TODO: Data annualized not divided
+annualized_other <- function(){
+  data_element <- 'Other separations'
+  
+  t <- jolts[jolts$data_element == data_element &
+               jolts$rate_level == 'Rate',] %>%
+    select(period, value, industry, NAICS) %>%
+    mutate(period = substr(as.character(period),1,4)) %>%
+    group_by(period, industry, NAICS) %>%
+    summarize(value = sum(value)) %>%
+    ungroup() %>%
+    mutate(period = parse_date_time(period, 'y')) %>%
+    mutate(NAICS = as.numeric(NAICS)) %>%
+    rename(other = value)
+  
+  wr_training$period <- parse_date_time(wr_training$period, 'ymd')
+  
+  p <- inner_join(wr_training, t, by = c("industry", 'NAICS', 'period')) %>%
+    select(NAICS, period, `Scale ID`, industry, training_index, other)
+  
+  return(p)
+}
